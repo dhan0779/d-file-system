@@ -39,3 +39,10 @@ func Initialize(port int) {
 	rpc.Accept(listener)
 	log.Println("datanode started on port: " + strconv.Itoa(port))
 }
+
+func (nameNode *NameNodeService) GetBlockSize(req bool, res *uint64) error {
+	if req {
+		*res = nameNode.BlockSize
+	}
+	return nil
+}
