@@ -42,3 +42,5 @@ func Initialize(port int) {
 	rpc.Accept(listener)
 	log.Println("datanode started on port: " + strconv.Itoa(port))
 }
+
+func (dataNode *DataNodeService) GetData()
