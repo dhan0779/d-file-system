@@ -43,4 +43,4 @@ func Initialize(port int) {
 	log.Println("datanode started on port: " + strconv.Itoa(port))
 }
 
-func (dataNode *DataNodeService) GetData()
+func (dataNode *DataNodeService) GetData() {}
