@@ -11,6 +11,17 @@ type NameNodeService struct {
 	BlockSize uint64
 	ReplicationFactor uint64
 	Port uint64
+	FileToBlocks map[string][]string
+	BlocksToDataNodes map[string][]uint64 // replication
+}
+
+type WriteRequest struct {
+	FileName string
+	FileSize uint64
+}
+
+type Metadata struct {
+
 }
 
 func New(blockSize uint64, replicationFactor uint64) *NameNodeService {
@@ -45,4 +56,20 @@ func (nameNode *NameNodeService) GetBlockSize(req bool, res *uint64) error {
 		*res = nameNode.BlockSize
 	}
 	return nil
+}
+
+func (nameNode *NameNodeService) GetMetadataFromWrite(req *WriteRequest, res *[]Metadata) error {
+	nameNode.FileToBlocks[req.FileName] = []string{}
+	numBlocks := uint64(uint64(req.FileSize) / uint64(nameNode.BlockSize))
+
+	return nil
+}
+
+func (nameNode *NameNodeService) assignNodes(fileName string, numBlocks uint64) []Metadata {
+	metadata := []Metadata{}
+
+	for i := 0; i < int(numBlocks); i++ {
+		
+	}
+	return metadata
 }
