@@ -9,8 +9,7 @@ import (
 )
 
 type DataNodeService struct {
-	Port uint64
-	NameNodePort uint64
+	Port int
 }
 
 func (dataNode *DataNodeService) Heartbeat(req bool, res *bool) error {
@@ -25,7 +24,7 @@ func (dataNode *DataNodeService) Heartbeat(req bool, res *bool) error {
 
 func Initialize(port int) {
 	instance := new(DataNodeService)
-	instance.Port = uint64(port)
+	instance.Port = int(port)
 
 	err := rpc.Register(instance)
 	if err != nil {
