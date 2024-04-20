@@ -38,9 +38,9 @@ func Initialize(port int) {
 	if err != nil {
 		panic(err)
 	}
-
-	rpc.Accept(listener)
+	
 	log.Println("datanode started on port: " + strconv.Itoa(port))
+	rpc.Accept(listener)
 }
 
 func (dataNode *DataNodeService) GetData() {}

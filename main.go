@@ -17,14 +17,14 @@ func check_port_available(host string, port int) bool {
 		return false
 	}
 	if conn != nil {
-		defer conn.Close()
+		conn.Close()
 		return true
 	}
 	return false
 }
 
 func main() {
-	server_port := 7000
+	server_port := 7001
 	switch os.Args[2] {
 	case "datanode":
 		server_port += 1
