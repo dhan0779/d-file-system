@@ -5,6 +5,8 @@ import (
 	"net"
 	"net/rpc"
 	"strconv"
+
+	"github.com/google/uuid"
 )
 
 type NameNodeService struct {
@@ -13,6 +15,7 @@ type NameNodeService struct {
 	Port uint64
 	FileToBlocks map[string][]string
 	BlocksToDataNodes map[string][]uint64 // replication
+	// DataNodeIdToInstance map[uint]
 }
 
 type WriteRequest struct {
@@ -69,7 +72,15 @@ func (nameNode *NameNodeService) assignNodes(fileName string, numBlocks uint64) 
 	metadata := []Metadata{}
 
 	for i := 0; i < int(numBlocks); i++ {
-		
+		blockId := uuid.NewString()
+		nameNode.FileToBlocks[fileName] = append(nameNode.FileToBlocks[fileName], blockId)
+		nameNode.BlocksToDataNodes[blockId] = []uint64{}
+
+
 	}
 	return metadata
 }
+
+// func (nameNode *NameNodeService) findDataNodes(dataNodes []string) {
+// 	nameNode.I
+// }

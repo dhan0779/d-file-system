@@ -1,13 +1,27 @@
 package main
 
 import (
-	"d-file-system/client"
 	"d-file-system/datanode"
 	"d-file-system/namenode"
 	"log"
+	"net"
 	"os"
 	"strconv"
+	"time"
 )
+
+func check_port_available(host string, port string) bool {
+	timeout := time.Second
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+	if err != nil {
+		return false
+	}
+	if conn != nil {
+		defer conn.Close()
+		return true
+	}
+	return false
+}
 
 func main() {
 	switch os.Args[2] {
