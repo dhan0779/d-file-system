@@ -10,9 +10,9 @@ import (
 	"time"
 )
 
-func check_port_available(host string, port string) bool {
+func check_port_available(host string, port int) bool {
 	timeout := time.Second
-	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, strconv.Itoa(port)), timeout)
 	if err != nil {
 		return false
 	}
@@ -24,21 +24,16 @@ func check_port_available(host string, port string) bool {
 }
 
 func main() {
+	server_port := 7000
 	switch os.Args[2] {
 	case "datanode":
-		port, e := strconv.Atoi(os.Args[3])
-		if e != nil {
-			log.Println("Error converting port number")
-			os.Exit(1)
+		server_port += 1
+		for !check_port_available("localhost", server_port) {
+			server_port += 1
 		}
-		datanode.Initialize(port)
+		datanode.Initialize(server_port)
 	case "namenode":
-		port, e := strconv.Atoi(os.Args[3])
-		if e != nil {
-			log.Println("Error converting port number")
-			os.Exit(1)
-		}
-		namenode.Initialize(port)
+		namenode.Initialize(server_port)
 	case "client":
 		// client.WriteFile(os.Args[3], os.Args[4], )
 	default:

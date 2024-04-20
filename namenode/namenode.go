@@ -61,12 +61,12 @@ func (nameNode *NameNodeService) GetBlockSize(req bool, res *uint64) error {
 	return nil
 }
 
-func (nameNode *NameNodeService) GetMetadataFromWrite(req *WriteRequest, res *[]Metadata) error {
-	nameNode.FileToBlocks[req.FileName] = []string{}
-	numBlocks := uint64(uint64(req.FileSize) / uint64(nameNode.BlockSize))
+// func (nameNode *NameNodeService) GetMetadataFromWrite(req *WriteRequest, res *[]Metadata) error {
+// 	nameNode.FileToBlocks[req.FileName] = []string{}
+// 	numBlocks := uint64(uint64(req.FileSize) / uint64(nameNode.BlockSize))
 
-	return nil
-}
+// 	return nil
+// }
 
 func (nameNode *NameNodeService) assignNodes(fileName string, numBlocks uint64) []Metadata {
 	metadata := []Metadata{}
