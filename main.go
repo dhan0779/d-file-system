@@ -24,7 +24,7 @@ func check_port_available(host string, port int) bool {
 }
 
 func main() {
-	server_port := 7001
+	server_port := 8000
 	switch os.Args[2] {
 	case "datanode":
 		server_port += 1

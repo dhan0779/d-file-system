@@ -13,7 +13,7 @@ type DataNodeService struct {
 	NameNodePort uint64
 }
 
-func Heartbeat(req bool, res *bool) error {
+func (dataNode *DataNodeService) Heartbeat(req bool, res *bool) error {
 	if req {
 		log.Println("received from Namenode")
 		*res = true
@@ -38,7 +38,7 @@ func Initialize(port int) {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	log.Println("datanode started on port: " + strconv.Itoa(port))
 	rpc.Accept(listener)
 }
