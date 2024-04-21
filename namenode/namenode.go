@@ -6,7 +6,6 @@ import (
 	"net/rpc"
 	"strconv"
 	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -81,7 +80,7 @@ func (nameNode *NameNodeService) heartbeatRoutine() {
 			res := false
 			err = dataNodeInstance.Call("DataNodeService.Heartbeat", true, &res)
 			if err != nil || !res {
-				log.Println(res)
+				log.Println(err)
 				log.Printf("No heartbeat from datanode at port %d\n", dataNodePort)
 				delete(nameNode.DataNodeIds, dataNodePort) // delete data node from namenode
 				// redistribute data here
