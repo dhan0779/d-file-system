@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+message BoolCheck {
+    bool req = 1;
+}
+
+message IntCheck {
+    int64 req = 1;
+}
+
+service NameNodeService {
+    rpc GetBlockSize (stream BoolCheck) returns (stream IntCheck) {}
+    rpc AddDataNode (stream IntCheck) returns (stream BoolCheck) {}
+}
+
+service DataNodeService {
+    rpc Heartbeat (stream BoolCheck) returns (stream BoolCheck) {}
+    
+}
