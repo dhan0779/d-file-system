@@ -13,6 +13,7 @@ type DataNodeService struct {
 }
 
 func (dataNode *DataNodeService) Heartbeat(req bool, res *bool) error {
+	log.Println(req)
 	if req {
 		log.Println("received from Namenode")
 		*res = true
@@ -39,6 +40,17 @@ func Initialize(port int) {
 	}
 
 	log.Println("datanode started on port: " + strconv.Itoa(port))
+	nameNodeInstance, err := rpc.Dial("tcp", ":8000")
+	if err != nil {
+		panic(err)
+	}
+
+	res := false
+	err = nameNodeInstance.Call("NameNodeService.AddDataNode", port, &res)
+	if err != nil || !res {
+		panic("Could not add data node to name node")
+	}
+
 	rpc.Accept(listener)
 }
 

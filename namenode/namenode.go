@@ -32,12 +32,18 @@ func New(blockSize int, replicationFactor int) *NameNodeService {
 	return &NameNodeService{
 		BlockSize: blockSize,
 		ReplicationFactor: replicationFactor,
+		DataNodeIds: make(map[int]struct{}),
+		BlocksToDataNodes: make(map[string][]int),
+		FileToBlocks: make(map[string][]string),
 	}
 }
 
 func Initialize(port int) {
 	instance := new(NameNodeService)
 	instance.Port = int(port)
+	instance.DataNodeIds = make(map[int]struct{})
+
+	go instance.heartbeatRoutine() // starts heartbeat routine for datanodes
 
 	err := rpc.Register(instance)
 	if err != nil {
@@ -51,19 +57,19 @@ func Initialize(port int) {
 		panic(err)
 	}
 	log.Println("namenode started on port: " + strconv.Itoa(port))
-
-	go instance.heartbeatRoutine() // starts heartbeat routine for datanodes
 	rpc.Accept(listener)
 }
 
 func (nameNode *NameNodeService) heartbeatRoutine() {
-	dataNodePorts := make([]int, 0, len(nameNode.DataNodeIds))
-	for k := range nameNode.DataNodeIds {
-		dataNodePorts = append(dataNodePorts, k)
-	}
 	for range time.Tick(time.Second) {
+		dataNodePorts := make([]int, 0, len(nameNode.DataNodeIds))
+		for k := range nameNode.DataNodeIds {
+			dataNodePorts = append(dataNodePorts, k)
+		}
+		log.Println(dataNodePorts)
+
 		for _, dataNodePort := range dataNodePorts {
-			dataNodeInstance, err := rpc.Dial("tcp", strconv.Itoa(dataNodePort))
+			dataNodeInstance, err := rpc.Dial("tcp", ":"+strconv.Itoa(dataNodePort))
 
 			if err != nil {
 				log.Printf("No connection to datanode at port %d\n", dataNodePort)
@@ -72,13 +78,15 @@ func (nameNode *NameNodeService) heartbeatRoutine() {
 				continue
 			}
 
-			var res bool
+			res := false
 			err = dataNodeInstance.Call("DataNodeService.Heartbeat", true, &res)
 			if err != nil || !res {
+				log.Println(res)
 				log.Printf("No heartbeat from datanode at port %d\n", dataNodePort)
 				delete(nameNode.DataNodeIds, dataNodePort) // delete data node from namenode
 				// redistribute data here
 			}
+			dataNodeInstance.Close()
 
 		}
 	}
@@ -88,6 +96,12 @@ func (nameNode *NameNodeService) GetBlockSize(req bool, res *int) error {
 	if req {
 		*res = nameNode.BlockSize
 	}
+	return nil
+}
+
+func (nameNode *NameNodeService) AddDataNode(req int, res *bool) error {
+	nameNode.DataNodeIds[req] = struct{}{}
+	*res = true
 	return nil
 }
 
