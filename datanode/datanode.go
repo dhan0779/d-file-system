@@ -14,9 +14,8 @@ type Service struct {
 }
 
 func (dataNode *Service) Heartbeat(req bool, res *bool) error {
-	log.Println("hi")
 	if req {
-		log.Println("received from Namenode")
+		log.Println("heartbeat acknowledged")
 		*res = true
 		return nil
 	}

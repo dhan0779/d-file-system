@@ -124,6 +124,3 @@ func (nameNode *Service) assignNodes(fileName string, numBlocks int) []Metadata 
 	return metadata
 }
 
-// func (nameNode *Service) findDataNodes(dataNodes []string) {
-// 	nameNode.I
-// }
