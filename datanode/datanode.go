@@ -8,12 +8,13 @@ import (
 	"strconv"
 )
 
-type DataNodeService struct {
+type Service struct {
 	Port int
+	Host string
 }
 
-func (dataNode *DataNodeService) Heartbeat(req bool, res *bool) error {
-	log.Println(req)
+func (dataNode *Service) Heartbeat(req bool, res *bool) error {
+	log.Println("hi")
 	if req {
 		log.Println("received from Namenode")
 		*res = true
@@ -23,9 +24,10 @@ func (dataNode *DataNodeService) Heartbeat(req bool, res *bool) error {
 	return errors.New("heartbeat request error")
 } 
 
-func Initialize(port int) {
-	instance := new(DataNodeService)
-	instance.Port = int(port)
+func Initialize(host string, port int, server_port int) {
+	instance := new(Service)
+	instance.Port = port
+	instance.Host = host
 
 	err := rpc.Register(instance)
 	if err != nil {
@@ -33,20 +35,20 @@ func Initialize(port int) {
 	}
 
 	rpc.HandleHTTP()
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+	listener, err := net.Listen("tcp", host + ":" + strconv.Itoa(port))
 
 	if err != nil {
 		panic(err)
 	}
 
 	log.Println("datanode started on port: " + strconv.Itoa(port))
-	nameNodeInstance, err := rpc.Dial("tcp", ":8000")
+	nameNodeInstance, err := rpc.Dial("tcp", host + ":" + strconv.Itoa(server_port))
 	if err != nil {
 		panic(err)
 	}
 
 	res := false
-	err = nameNodeInstance.Call("NameNodeService.AddDataNode", port, &res)
+	err = nameNodeInstance.Call("Service.AddDataNode", port, &res)
 	if err != nil || !res {
 		panic("Could not add data node to name node")
 	}
@@ -54,4 +56,4 @@ func Initialize(port int) {
 	rpc.Accept(listener)
 }
 
-func (dataNode *DataNodeService) GetData() {}
+func (dataNode *Service) GetData() {}

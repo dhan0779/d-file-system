@@ -6,13 +6,15 @@ import (
 	"net/rpc"
 	"strconv"
 	"time"
+
 	"github.com/google/uuid"
 )
 
-type NameNodeService struct {
+type Service struct {
 	BlockSize int
 	ReplicationFactor int
 	Port int
+	Host string
 	FileToBlocks map[string][]string
 	BlocksToDataNodes map[string][]int // replication
 	DataNodeIds map[int]struct{} // we can use ports as datanode ids and store in set
@@ -27,20 +29,20 @@ type Metadata struct {
 
 }
 
-func New(blockSize int, replicationFactor int) *NameNodeService {
-	return &NameNodeService{
+func New(host string, port int, blockSize int, replicationFactor int) *Service {
+	return &Service{
 		BlockSize: blockSize,
 		ReplicationFactor: replicationFactor,
+		Port: port,
+		Host: host,
 		DataNodeIds: make(map[int]struct{}),
 		BlocksToDataNodes: make(map[string][]int),
 		FileToBlocks: make(map[string][]string),
 	}
 }
 
-func Initialize(port int) {
-	instance := new(NameNodeService)
-	instance.Port = int(port)
-	instance.DataNodeIds = make(map[int]struct{})
+func Initialize(host string, port int) {
+	instance := New(host, port, 64, 3)
 
 	go instance.heartbeatRoutine() // starts heartbeat routine for datanodes
 
@@ -50,7 +52,7 @@ func Initialize(port int) {
 	}
 
 	rpc.HandleHTTP()
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+	listener, err := net.Listen("tcp", host + ":" + strconv.Itoa(port))
 
 	if err != nil {
 		panic(err)
@@ -59,7 +61,7 @@ func Initialize(port int) {
 	rpc.Accept(listener)
 }
 
-func (nameNode *NameNodeService) heartbeatRoutine() {
+func (nameNode *Service) heartbeatRoutine() {
 	for range time.Tick(time.Second) {
 		dataNodePorts := make([]int, 0, len(nameNode.DataNodeIds))
 		for k := range nameNode.DataNodeIds {
@@ -68,7 +70,7 @@ func (nameNode *NameNodeService) heartbeatRoutine() {
 		log.Println(dataNodePorts)
 
 		for _, dataNodePort := range dataNodePorts {
-			dataNodeInstance, err := rpc.Dial("tcp", ":"+strconv.Itoa(dataNodePort))
+			dataNodeInstance, err := rpc.Dial("tcp", nameNode.Host + ":" + strconv.Itoa(dataNodePort))
 
 			if err != nil {
 				log.Printf("No connection to datanode at port %d\n", dataNodePort)
@@ -78,40 +80,38 @@ func (nameNode *NameNodeService) heartbeatRoutine() {
 			}
 
 			res := false
-			err = dataNodeInstance.Call("DataNodeService.Heartbeat", true, &res)
+			err = dataNodeInstance.Call("Service.Heartbeat", true, &res)
 			if err != nil || !res {
 				log.Println(err)
 				log.Printf("No heartbeat from datanode at port %d\n", dataNodePort)
 				delete(nameNode.DataNodeIds, dataNodePort) // delete data node from namenode
 				// redistribute data here
 			}
-			dataNodeInstance.Close()
-
 		}
 	}
 }
 
-func (nameNode *NameNodeService) GetBlockSize(req bool, res *int) error {
+func (nameNode *Service) GetBlockSize(req bool, res *int) error {
 	if req {
 		*res = nameNode.BlockSize
 	}
 	return nil
 }
 
-func (nameNode *NameNodeService) AddDataNode(req int, res *bool) error {
+func (nameNode *Service) AddDataNode(req int, res *bool) error {
 	nameNode.DataNodeIds[req] = struct{}{}
 	*res = true
 	return nil
 }
 
-// func (nameNode *NameNodeService) GetMetadataFromWrite(req *WriteRequest, res *[]Metadata) error {
+// func (nameNode *Service) GetMetadataFromWrite(req *WriteRequest, res *[]Metadata) error {
 // 	nameNode.FileToBlocks[req.FileName] = []string{}
 // 	numBlocks := int(int(req.FileSize) / int(nameNode.BlockSize))
 
 // 	return nil
 // }
 
-func (nameNode *NameNodeService) assignNodes(fileName string, numBlocks int) []Metadata {
+func (nameNode *Service) assignNodes(fileName string, numBlocks int) []Metadata {
 	metadata := []Metadata{}
 
 	for i := 0; i < int(numBlocks); i++ {
@@ -124,6 +124,6 @@ func (nameNode *NameNodeService) assignNodes(fileName string, numBlocks int) []M
 	return metadata
 }
 
-// func (nameNode *NameNodeService) findDataNodes(dataNodes []string) {
+// func (nameNode *Service) findDataNodes(dataNodes []string) {
 // 	nameNode.I
 // }
