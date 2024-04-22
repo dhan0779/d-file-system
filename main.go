@@ -24,13 +24,17 @@ func check_port_available(host string, port int) bool {
 }
 
 func main() {
-	server_port := 5000
+	server_port := 8000
 	host := "localhost"
 	switch os.Args[1] {
 	case "datanode":
-		port := server_port + 1
-		for !check_port_available(host, port) {
-			port += 1
+		// port := server_port + 1
+		// for !check_port_available(host, port) {
+		// 	port += 1
+		// }
+		port, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			panic(err)
 		}
 		datanode.Initialize(host, port, server_port)
 	case "namenode":
