@@ -2,6 +2,7 @@ package namenode
 
 import (
 	"log"
+	"math/rand"
 	"net"
 	"net/rpc"
 	"strconv"
@@ -26,7 +27,8 @@ type WriteRequest struct {
 }
 
 type Metadata struct {
-
+	Blocks []string
+	BlocksToDataNodes map[string][]int
 }
 
 func New(host string, port int, blockSize int, replicationFactor int) *Service {
@@ -104,22 +106,38 @@ func (nameNode *Service) AddDataNode(req int, res *bool) error {
 	return nil
 }
 
-// func (nameNode *Service) GetMetadataFromWrite(req *WriteRequest, res *[]Metadata) error {
-// 	nameNode.FileToBlocks[req.FileName] = []string{}
-// 	numBlocks := int(int(req.FileSize) / int(nameNode.BlockSize))
+func (nameNode *Service) GetMetadataFromWrite(req *WriteRequest, res *Metadata) error {
+	nameNode.FileToBlocks[req.FileName] = []string{}
+	numBlocks := int(int(req.FileSize) / int(nameNode.BlockSize))
+	*res = nameNode.assignNodes(req.FileName, numBlocks)
+	return nil
+}
 
-// 	return nil
-// }
+func (nameNode *Service) assignNodes(fileName string, numBlocks int) Metadata {
+	metadata := Metadata{}
 
-func (nameNode *Service) assignNodes(fileName string, numBlocks int) []Metadata {
-	metadata := []Metadata{}
+	dataNodePorts := make([]int, 0, len(nameNode.DataNodeIds))
+	for k := range nameNode.DataNodeIds {
+		dataNodePorts = append(dataNodePorts, k)
+	}
 
 	for i := 0; i < int(numBlocks); i++ {
 		blockId := uuid.NewString()
+		metadata.Blocks = append(metadata.Blocks, blockId)
 		nameNode.FileToBlocks[fileName] = append(nameNode.FileToBlocks[fileName], blockId)
 		nameNode.BlocksToDataNodes[blockId] = []int{}
 
+		// shuffle for random distribution of load
+		for j := range dataNodePorts {
+			k := rand.Intn(i+1)
+			dataNodePorts[j], dataNodePorts[k] = dataNodePorts[k], dataNodePorts[j]
+		}
 
+		// assume replication factor is less than or equal to number of data nodes
+		for j := 0; j < nameNode.ReplicationFactor; j++ {
+			metadata.BlocksToDataNodes[blockId] = append(metadata.BlocksToDataNodes[blockId], dataNodePorts[j])
+			nameNode.BlocksToDataNodes[blockId] = append(nameNode.BlocksToDataNodes[blockId], dataNodePorts[j])
+		}	
 	}
 	return metadata
 }
