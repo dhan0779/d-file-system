@@ -3,6 +3,7 @@ package main
 import (
 	"d-file-system/datanode"
 	"d-file-system/namenode"
+	"d-file-system/client"
 	"log"
 	"net"
 	"os"
@@ -40,7 +41,7 @@ func main() {
 	case "namenode":
 		namenode.Initialize(host, server_port)
 	case "client":
-		// client.WriteFile(os.Args[3], os.Args[4], )
+		client.WriteFile(os.Args[2], os.Args[3], host, server_port)
 	default:
 		log.Println("Node not specified")
 		os.Exit(1)

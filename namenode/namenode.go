@@ -33,7 +33,7 @@ type Metadata struct {
 
 func New(host string, port int, blockSize int, replicationFactor int) *Service {
 	return &Service{
-		BlockSize: blockSize,
+		BlockSize: blockSize*1000000,
 		ReplicationFactor: replicationFactor,
 		Port: port,
 		Host: host,
@@ -108,13 +108,15 @@ func (nameNode *Service) AddDataNode(req int, res *bool) error {
 
 func (nameNode *Service) GetMetadataFromWrite(req *WriteRequest, res *Metadata) error {
 	nameNode.FileToBlocks[req.FileName] = []string{}
-	numBlocks := int(int(req.FileSize) / int(nameNode.BlockSize))
+	numBlocks := int(req.FileSize / nameNode.BlockSize)
 	*res = nameNode.assignNodes(req.FileName, numBlocks)
 	return nil
 }
 
 func (nameNode *Service) assignNodes(fileName string, numBlocks int) Metadata {
-	metadata := Metadata{}
+	metadata := Metadata{
+		BlocksToDataNodes: make(map[string][]int),
+	}
 
 	dataNodePorts := make([]int, 0, len(nameNode.DataNodeIds))
 	for k := range nameNode.DataNodeIds {
@@ -129,11 +131,14 @@ func (nameNode *Service) assignNodes(fileName string, numBlocks int) Metadata {
 
 		// shuffle for random distribution of load
 		for j := range dataNodePorts {
-			k := rand.Intn(i+1)
+			k := rand.Intn(j+1)
 			dataNodePorts[j], dataNodePorts[k] = dataNodePorts[k], dataNodePorts[j]
 		}
 
-		// assume replication factor is less than or equal to number of data nodes
+		if nameNode.ReplicationFactor > len(dataNodePorts) {
+			nameNode.ReplicationFactor = len(dataNodePorts)
+		}
+
 		for j := 0; j < nameNode.ReplicationFactor; j++ {
 			metadata.BlocksToDataNodes[blockId] = append(metadata.BlocksToDataNodes[blockId], dataNodePorts[j])
 			nameNode.BlocksToDataNodes[blockId] = append(nameNode.BlocksToDataNodes[blockId], dataNodePorts[j])
