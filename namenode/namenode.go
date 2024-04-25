@@ -27,6 +27,10 @@ type WriteRequest struct {
 	FileSize int
 }
 
+type ReadRequest struct {
+	FileName string
+}
+
 type Metadata struct {
 	Blocks []string
 	BlocksToDataNodes map[string][]int
@@ -148,3 +152,10 @@ func (nameNode *Service) assignNodes(fileName string, numBlocks int) Metadata {
 	return metadata
 }
 
+func (nameNode *Service) GetMetadataFromRead(req *ReadRequest, res *Metadata) error {
+	res.Blocks = nameNode.FileToBlocks[req.FileName]
+	for _, blockId := range res.Blocks {
+		res.BlocksToDataNodes[blockId] = nameNode.BlocksToDataNodes[blockId]
+	}
+	return nil
+}
