@@ -57,8 +57,24 @@ func WriteFile(fileDirectory string, fileName string, host string, port int) {
 			dataNodeWriteRequest := datanode.WriteRequest{BlockId: blockId, BlockData: byteStore}
 			err = dataNodeInstance.Call("Service.WriteData", dataNodeWriteRequest, &res)
 			if !res || err != nil {
-				log.Printf("Could not write block to data node")
+				log.Println("Could not write block to data node")
 			}
 		}
 	}
+}
+
+func ReadFile(fileName string, host string, port int) {
+	nameNodeInstance, err := rpc.Dial("tcp", host + ":" + strconv.Itoa(port))
+	if err != nil {
+		log.Printf("No connection to name node at port %d\n", port)
+	}
+
+	rr := namenode.ReadRequest{FileName: fileName}
+	var metadata namenode.Metadata
+	err = nameNodeInstance.Call("Service.GetMetadataFromRead", rr, &metadata)
+	if err != nil {
+		log.Println("Could not get metadata to read from name node")
+	}
+
+	log.Println(metadata)
 }

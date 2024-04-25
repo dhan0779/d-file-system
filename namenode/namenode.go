@@ -153,9 +153,13 @@ func (nameNode *Service) assignNodes(fileName string, numBlocks int) Metadata {
 }
 
 func (nameNode *Service) GetMetadataFromRead(req *ReadRequest, res *Metadata) error {
-	res.Blocks = nameNode.FileToBlocks[req.FileName]
-	for _, blockId := range res.Blocks {
-		res.BlocksToDataNodes[blockId] = nameNode.BlocksToDataNodes[blockId]
+	metadata := Metadata{
+		BlocksToDataNodes: make(map[string][]int),
 	}
+	metadata.Blocks = nameNode.FileToBlocks[req.FileName]
+	for _, blockId := range metadata.Blocks {
+		metadata.BlocksToDataNodes[blockId] = nameNode.BlocksToDataNodes[blockId]
+	}
+	*res = metadata
 	return nil
 }
