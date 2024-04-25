@@ -5,12 +5,19 @@ import (
 	"log"
 	"net"
 	"net/rpc"
+	"os"
 	"strconv"
 )
 
 type Service struct {
 	Port int
 	Host string
+	Directory string
+}
+
+type WriteRequest struct {
+	BlockId string
+	BlockData []byte
 }
 
 func (dataNode *Service) Heartbeat(req bool, res *bool) error {
@@ -23,10 +30,19 @@ func (dataNode *Service) Heartbeat(req bool, res *bool) error {
 	return errors.New("heartbeat request error")
 } 
 
+func New(host string, port int, directory string) *Service {
+	return &Service{
+		Port: port,
+		Host: host,
+		Directory : directory,
+	}
+}
+
 func Initialize(host string, port int, server_port int) {
-	instance := new(Service)
-	instance.Port = port
-	instance.Host = host
+	storageDirectory := "./storage/" + strconv.Itoa(port) + "/"
+	instance := New(host, port, storageDirectory)
+	os.MkdirAll(storageDirectory, os.ModePerm)
+	log.Println(storageDirectory)
 
 	err := rpc.Register(instance)
 	if err != nil {
@@ -55,4 +71,16 @@ func Initialize(host string, port int, server_port int) {
 	rpc.Accept(listener)
 }
 
-func (dataNode *Service) GetData() {}
+func (dataNode *Service) WriteData(req *WriteRequest, res *bool) error {
+	f, err := os.Create(dataNode.Directory + req.BlockId)
+	if err != nil {
+		return errors.New("Could not create blockId file")
+	}
+
+	if _, err := f.Write(req.BlockData); err != nil {
+		return err
+	}
+
+	*res = true
+	return nil
+}

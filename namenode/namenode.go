@@ -2,6 +2,7 @@ package namenode
 
 import (
 	"log"
+	"math"
 	"math/rand"
 	"net"
 	"net/rpc"
@@ -108,7 +109,7 @@ func (nameNode *Service) AddDataNode(req int, res *bool) error {
 
 func (nameNode *Service) GetMetadataFromWrite(req *WriteRequest, res *Metadata) error {
 	nameNode.FileToBlocks[req.FileName] = []string{}
-	numBlocks := int(req.FileSize / nameNode.BlockSize)
+	numBlocks := int(math.Ceil(float64(req.FileSize) / float64(nameNode.BlockSize)))
 	*res = nameNode.assignNodes(req.FileName, numBlocks)
 	return nil
 }
