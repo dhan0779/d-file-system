@@ -69,6 +69,12 @@ func ReadFile(fileName string, host string, port int) {
 		log.Printf("No connection to name node at port %d\n", port)
 	}
 
+	var blockSize int
+	err = nameNodeInstance.Call("Service.GetBlockSize", true, &blockSize)
+	if err != nil {
+		panic("Cannot get block size from name node")
+	}
+
 	rr := namenode.ReadRequest{FileName: fileName}
 	var metadata namenode.Metadata
 	err = nameNodeInstance.Call("Service.GetMetadataFromRead", rr, &metadata)
@@ -76,5 +82,30 @@ func ReadFile(fileName string, host string, port int) {
 		log.Println("Could not get metadata to read from name node")
 	}
 
-	log.Println(metadata)
+	fileBody := make([]byte, blockSize*len(metadata.Blocks))
+	for i, blockId := range metadata.Blocks {
+		blockIdRead := false
+		for _, dataNodePort := range metadata.BlocksToDataNodes[blockId] {
+			dataNodeInstance, err := rpc.Dial("tcp", host + ":" + strconv.Itoa(dataNodePort))
+			if err != nil {
+				log.Printf("Could not connect to data node at port %d\n", port)
+				continue
+			}
+			
+			res := false
+			readRequest := datanode.ReadRequest{BlockId: blockId, DataBuffer: make([]byte, blockSize)}
+			err = dataNodeInstance.Call("Service.WriteData", readRequest, &res)
+			if err != nil {
+				break
+			} else {
+				copy(fileBody[i*blockSize:], readRequest.DataBuffer)	
+				blockIdRead = true
+			}
+		}
+
+		if !blockIdRead {
+			panic("Could not read entire file")
+		}
+	}
+	log.Println(fileBody[:1000])
 }
