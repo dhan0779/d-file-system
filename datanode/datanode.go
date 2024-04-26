@@ -20,6 +20,11 @@ type WriteRequest struct {
 	BlockData []byte
 }
 
+type ReadRequest struct {
+	BlockId string
+	DataBuffer []byte
+}
+
 func (dataNode *Service) Heartbeat(req bool, res *bool) error {
 	if req {
 		log.Println("heartbeat acknowledged")
@@ -76,11 +81,24 @@ func (dataNode *Service) WriteData(req *WriteRequest, res *bool) error {
 	if err != nil {
 		return errors.New("Could not create blockId file")
 	}
-
+	log.Println(req.BlockData[:100])
 	if _, err := f.Write(req.BlockData); err != nil {
 		return err
 	}
 
+	*res = true
+	return nil
+}
+
+func (dataNode *Service) ReadData(req *ReadRequest, res *bool) error {
+	f, err := os.Open(dataNode.Directory + req.BlockId)
+	if err != nil {
+		return errors.New("Could not read from blockId")
+	}
+
+	if _, err := f.Write(req.DataBuffer); err != nil {
+		return err
+	}
 	*res = true
 	return nil
 }

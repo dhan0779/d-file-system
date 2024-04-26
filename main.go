@@ -42,6 +42,7 @@ func main() {
 		namenode.Initialize(host, server_port)
 	case "client":
 		client.WriteFile(os.Args[2], os.Args[3], host, server_port)
+		client.ReadFile(os.Args[3], host, server_port)
 	default:
 		log.Println("Node not specified")
 		os.Exit(1)
