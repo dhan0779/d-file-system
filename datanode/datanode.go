@@ -22,6 +22,10 @@ type WriteRequest struct {
 
 type ReadRequest struct {
 	BlockId string
+	BlockSize int
+}
+
+type ReadResponse struct {
 	DataBuffer []byte
 }
 
@@ -81,7 +85,7 @@ func (dataNode *Service) WriteData(req *WriteRequest, res *bool) error {
 	if err != nil {
 		return errors.New("Could not create blockId file")
 	}
-	log.Println(req.BlockData[:100])
+
 	if _, err := f.Write(req.BlockData); err != nil {
 		return err
 	}
@@ -90,15 +94,17 @@ func (dataNode *Service) WriteData(req *WriteRequest, res *bool) error {
 	return nil
 }
 
-func (dataNode *Service) ReadData(req *ReadRequest, res *bool) error {
+func (dataNode *Service) ReadData(req *ReadRequest, res *ReadResponse) error {
 	f, err := os.Open(dataNode.Directory + req.BlockId)
+	buffer := make([]byte, req.BlockSize)
 	if err != nil {
 		return errors.New("Could not read from blockId")
 	}
 
-	if _, err := f.Write(req.DataBuffer); err != nil {
+	if _, err := f.Read(buffer); err != nil {
 		return err
 	}
-	*res = true
+	res.DataBuffer = buffer
+
 	return nil
 }
