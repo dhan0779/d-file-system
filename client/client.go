@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"d-file-system/datanode"
 	"d-file-system/namenode"
 	"log"
@@ -86,19 +87,22 @@ func ReadFile(fileName string, host string, port int) {
 	for i, blockId := range metadata.Blocks {
 		blockIdRead := false
 		for _, dataNodePort := range metadata.BlocksToDataNodes[blockId] {
+			if blockIdRead {
+				continue
+			}
 			dataNodeInstance, err := rpc.Dial("tcp", host + ":" + strconv.Itoa(dataNodePort))
 			if err != nil {
 				log.Printf("Could not connect to data node at port %d\n", port)
 				continue
 			}
 			
-			res := false
-			readRequest := datanode.ReadRequest{BlockId: blockId, DataBuffer: make([]byte, blockSize)}
-			err = dataNodeInstance.Call("Service.WriteData", readRequest, &res)
+			res := datanode.ReadResponse{DataBuffer: make([]byte, blockSize)}
+			readRequest := datanode.ReadRequest{BlockId: blockId, BlockSize: blockSize}
+			err = dataNodeInstance.Call("Service.ReadData", &readRequest, &res)
 			if err != nil {
 				break
 			} else {
-				copy(fileBody[i*blockSize:], readRequest.DataBuffer)	
+				copy(fileBody[i*blockSize:], res.DataBuffer)	
 				blockIdRead = true
 			}
 		}
@@ -107,5 +111,6 @@ func ReadFile(fileName string, host string, port int) {
 			panic("Could not read entire file")
 		}
 	}
-	log.Println(fileBody[:1000])
+	fileBody = bytes.Trim(fileBody, "\x00")
+	log.Println(string(fileBody))
 }
