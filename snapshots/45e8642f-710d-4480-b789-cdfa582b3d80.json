@@ -1,0 +1,1 @@
+{"BlockSize":64000000,"ReplicationFactor":1,"Port":8000,"Host":"localhost","FileToBlocks":{"test123.py":["26e01364-480e-4221-9545-ce32e3075fb6"]},"BlocksToDataNodes":{"26e01364-480e-4221-9545-ce32e3075fb6":[8002],"9a1e5683-baac-4536-8771-26036e65ca51":[8001]},"DataNodeIds":{"8001":{},"8002":{}}}

@@ -1,11 +1,13 @@
 package namenode
 
 import (
+	"encoding/json"
 	"log"
 	"math"
 	"math/rand"
 	"net"
 	"net/rpc"
+	"os"
 	"strconv"
 	"time"
 
@@ -115,6 +117,7 @@ func (nameNode *Service) GetMetadataFromWrite(req *WriteRequest, res *Metadata) 
 	nameNode.FileToBlocks[req.FileName] = []string{}
 	numBlocks := int(math.Ceil(float64(req.FileSize) / float64(nameNode.BlockSize)))
 	*res = nameNode.assignNodes(req.FileName, numBlocks)
+	nameNode.takeSnapshot()
 	return nil
 }
 
@@ -162,4 +165,22 @@ func (nameNode *Service) GetMetadataFromRead(req *ReadRequest, res *Metadata) er
 	}
 	*res = metadata
 	return nil
+}
+
+func (nameNode *Service) takeSnapshot() {
+	snapshotId := uuid.NewString()
+	snapshotPath := "snapshots/" + snapshotId + ".json"
+	_, err := os.Create(snapshotPath)
+	if err != nil {
+		log.Println("Could not create path")
+	}
+	content, err := json.Marshal(nameNode)
+	if err != nil {
+		log.Println("Could not take snapshot")
+	}
+
+	err = os.WriteFile(snapshotPath, content, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
