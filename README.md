@@ -1,3 +1,3 @@
 # d-file-system
 
-Creating a distributed file system in Go based on HDFS. 
+A distributed file system in Go based on HDFS. 
